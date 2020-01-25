@@ -126,6 +126,10 @@ router.post('/logout', async(req, res) => {
     let token = req.header('auth-token');
     token = '';
     res.header('auth-token', token);
+    token = res.header('ref-token');
+    TokenDB.deleteOne({
+        token_save: token,
+    });
     return res.status(200).send('you are logged out!');
 });
 
