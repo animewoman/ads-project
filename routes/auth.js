@@ -91,7 +91,7 @@ router.post('/refresh-token', async(req, res) => {
                 return res.status(401).send({
                     error: 'refTokenExp',
                 });
-            } else if(err.name === 'JsonWebTokenError'){
+            } else {
                 return res.status(401).send({
                     error: 'refTokenNotValid',
                 });
@@ -131,9 +131,6 @@ function generateRefreshToken(user){
 }
 
 router.post('/logout', async(req, res) => {
-    let token = req.header('auth-token');
-    token = '';
-    res.header('auth-token', token);
     token = res.header('ref-token');
     try{
         await TokenDB.deleteOne({
