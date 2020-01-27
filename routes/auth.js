@@ -135,10 +135,16 @@ router.post('/logout', async(req, res) => {
     token = '';
     res.header('auth-token', token);
     token = res.header('ref-token');
-    TokenDB.deleteOne({
-        token_save: token,
-    });
-    return res.status(200).send({ message: 'success'});
+    try{
+        await TokenDB.deleteOne({
+            token_save: token,
+        });
+        return res.status(200).send({ message: 'success'});
+    } catch(err){
+        return res.status(500).send({
+            error: 'smthWentWrong',
+        });
+    }
 });
 
 
