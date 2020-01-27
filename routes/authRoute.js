@@ -18,7 +18,9 @@ router.post('/register', async(req, res) => {
     });
 
     if(usernameExists){
-        return res.status(400).send('Username already exists');
+        return res.status(406).send({
+            message: 'userExists',
+        });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -29,8 +31,10 @@ router.post('/register', async(req, res) => {
         password: hashedPassword,
     });
     try {
-        const savedUser = await user.save();
-        return res.status(200).send({user: user._id});
+        await user.save();
+        return res.status(200).send({
+            message: 'success',
+        });
     }catch(err){
         res.status(400).send(err);
     }
@@ -46,12 +50,12 @@ router.post('/login', async(req, res) => {
     });
 
     if(!user) {
-        return res.status(400).send({ message: 'Wrong email or password'});
+        return res.status(400).send({ error: 'invalidUsername'});
     }
     const validPassword = await bcrypt.compare(req.body.password, user.password);
 
     if(!validPassword){
-        return res.status(400).send('Invalid Password');
+        return res.status(400).send({ error: 'invalidPassword'});
     }
 
     const token = generateAccessToken(user);
@@ -63,7 +67,7 @@ router.post('/login', async(req, res) => {
     res.header('auth-token', token);
     res.header('ref-token', refreshToken)
     try{
-        return res.status(200).send({ message: 'you are logged in!'});
+        return res.status(200).send({ message: 'success'});
     }catch(err){
         return res.status(400).send(err);
     }
@@ -77,7 +81,7 @@ router.post('/refresh-token', async(req, res) => {
     });
     if(!token || !token_in_db){
         return res.status(401).send({
-            message: 'Invalid Refresh Token',
+            error: 'refTokenNotValid',
         });
     }
     jwt.verify(token, process.env.REFRESH_TOKEN, function(err, decoded){
@@ -87,11 +91,11 @@ router.post('/refresh-token', async(req, res) => {
                     token_save: token,
                 });
                 return res.status(401).send({
-                    message: 'Refresh Token expaired',
+                    error: 'refTokenExp',
                 });
             } else if(err.name === 'JsonWebTokenError'){
                 return res.status(401).send({
-                    message: 'Refresh Token is Invalid',
+                    error: 'refTokenNotValid',
                 });
             }
         }else {
@@ -108,7 +112,7 @@ router.post('/refresh-token', async(req, res) => {
             res.header('ref-token', token_to_save);
 
             return res.status(200).send({
-                message: 'refreshed'
+                message: 'success'
             });
         }
     });
@@ -130,7 +134,7 @@ router.post('/logout', async(req, res) => {
     TokenDB.deleteOne({
         token_save: token,
     });
-    return res.status(200).send('you are logged out!');
+    return res.status(200).send({ message: 'success'});
 });
 
 

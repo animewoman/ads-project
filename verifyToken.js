@@ -7,11 +7,11 @@ module.exports = function (req, res, next) {
        if(err){
             if(err.name === 'TokenExpiredError'){
                 return res.status(401).send({
-                    message: 'Token expaired',
+                    error: 'tokenExp',
                 });
             } else if(err.name === 'JsonWebTokenError'){
                 return res.status(401).send({
-                    message: 'Invalid Token',
+                    error: 'tokenNotValid',
                 })
             }
        } else {
