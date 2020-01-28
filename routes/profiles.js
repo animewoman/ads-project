@@ -3,7 +3,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const verify = require('../middleware/verifyToken');
 const mongoose = require('mongoose');
-
+const bcrypt = require('bcryptjs');
 
 mongoose.set('useFindAndModify', false);
 
@@ -45,7 +45,22 @@ route.get('/:username', async(req, res) => {
 route.put('/:username', verify, async(req, res) => {
     try{
          const filter = { username: req.params.username };
-         const user = await User.findOneAndUpdate(filter, req.body, { new: true });
+         const user = req.body;
+         if(user.oldPassword){
+            const tempUser = await User.findOne(filter);
+            const validPassword = await bcrypt.compare(user.oldPassword, tempUser.password);
+            if(!validPassword){
+                return res.status(401).send({
+                    error: 'wrongPassword'
+                });
+            }
+            const salt = await bcrypt.genSalt(10);
+            const hashedPassword = await bcrypt.hash(user.newPassword, salt);
+            delete user.oldPassword;
+            delete user.newPassword;
+            user.password = hashedPassword;
+         }
+         await User.findOneAndUpdate(filter, user, { new: true });
          return res.status(200).send({
              message: 'success'
          });
