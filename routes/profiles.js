@@ -6,27 +6,46 @@ route.get('/:username', async(req, res) => {
     const user = await User.findOne({
         username: req.params.username,
     });
-    if(!user) return res.status(400).send({
+    if(!user) return res.status(401).send({
         error: 'invalidUsername'
     });
-    return checkToken(req.header('auth-token'), res);
+    const decoded = jwt.decode(req.header('auth-token'), { complete: true });
+    const usernameFromToken = decoded.payload.username;
+    const checker = checkToken(req.header('auth-token'));
+    if(user.username === usernameFromToken){  
+        if(checker === 'response'){
+            return res.status(200).send({
+                name: user.name,
+                username: user.username,
+                date: user.date,
+                sameUser: true,
+            });
+        } else {
+            return res.status(401).send({
+                error: 'asf',
+            })
+        } 
+    } else {
+        return res.status(200).send({
+            name: user.name,
+            username: user.username,
+            date: user.date,
+            sameUser: false,
+        });
+    }
 
 });
 
-function checkToken(token, res){
-    jwt.verify(token, process.env.SECRET_TOKEN, function(err, decoded){
+function checkToken(token){
+    return jwt.verify(token, process.env.SECRET_TOKEN, function(err, decoded){
         if(err){
             if(err.name === 'TokenExpiredError'){
-                return res.redirect('/myprofile');
+                return 'tokenExp';
             } else{
-                return res.status(200).send({
-                    name: user.name,
-                    username: user.username,
-                    date: user.date,
-                });
+                return 'tokenNotValid';
             }
         } else{
-            return res.redirect('/myprofile');
+            return 'response';
         }
     });
 }
