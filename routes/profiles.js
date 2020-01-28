@@ -7,7 +7,7 @@ route.get('/:username', async(req, res) => {
         username: req.params.username,
     });
     if(!user) return res.status(401).send({
-        error: 'invalidUsername'
+        error: 'userNotExists'
     });
     const decoded = jwt.decode(req.header('auth-token'), { complete: true });
     const usernameFromToken = decoded.payload.username;
