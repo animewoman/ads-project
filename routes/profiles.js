@@ -22,7 +22,7 @@ route.get('/:username', async(req, res) => {
             });
         } else {
             return res.status(401).send({
-                error: 'asf',
+                error: checker,
             })
         } 
     } else {
