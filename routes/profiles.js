@@ -44,10 +44,11 @@ route.get('/:username', async(req, res) => {
 
 route.put('/:username', verify, async(req, res) => {
     try{
-        const filter = { username: req.params.username };
+         const filter = { username: req.params.username };
          const user = await User.findOneAndUpdate(filter, req.body, { new: true });
-         user.save();
-         return res.status(200).send(user);
+         return res.status(200).send({
+             message: 'success'
+         });
      } catch(err){
          return res.status(500).send({
              error: 'smthWentWrong',
