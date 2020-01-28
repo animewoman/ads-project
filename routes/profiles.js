@@ -2,7 +2,10 @@ const route = require('express').Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const verify = require('../middleware/verifyToken');
+const mongoose = require('mongoose');
 
+
+mongoose.set('useFindAndModify', false);
 
 route.get('/:username', async(req, res) => {
     const user = await User.findOne({
@@ -40,25 +43,17 @@ route.get('/:username', async(req, res) => {
 
 
 route.put('/:username', verify, async(req, res) => {
-    const user = await User.findOne({
-        username: req.params.username,
-    });
-    if(!user){
-        return res.send(401).send({
-            error: 'userNotExists',
-        });
-    }
     try{
-        user.name = req.body.name;
-        await user.save();
-        res.status(200).send({
-            message: 'success'
-        });
-    } catch(err){
-        return res.status(500).send({
-            error: 'smthWentWrong',
-        })
-    }
+        const filter = { username: req.params.username };
+         const user = await User.findOneAndUpdate(filter, req.body, { new: true });
+         user.save();
+         return res.status(200).send(user);
+     } catch(err){
+         return res.status(500).send({
+             error: 'smthWentWrong',
+         });
+     }
+   
 });
 
 
