@@ -15,7 +15,9 @@ route.get("/:username", async (req, res) => {
     return res.status(401).send({
       error: "userNotExists"
     });
-  if (req.header("auth-token") === null) {
+  const decoded = jwt.decode(req.header("auth-token"), { complete: true });
+  const usernameFromToken = decoded.payload.username;
+  if (decoded.payload === null) {
     return res.status(200).send({
       name: user.name,
       username: user.username,
@@ -23,8 +25,6 @@ route.get("/:username", async (req, res) => {
       sameUser: false
     });
   }
-  const decoded = jwt.decode(req.header("auth-token"), { complete: true });
-  const usernameFromToken = decoded.payload.username;
   const checker = checkToken(req.header("auth-token"));
   if (user.username === usernameFromToken) {
     if (checker === "response") {
