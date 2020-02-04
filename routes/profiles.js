@@ -8,9 +8,6 @@ const bcrypt = require("bcryptjs");
 mongoose.set("useFindAndModify", false);
 
 route.get("/:username", async (req, res) => {
-  return res.status(200).send({
-    username: req.params.username
-  });
   const user = await User.findOne({
     username: req.params.username
   });
@@ -18,6 +15,15 @@ route.get("/:username", async (req, res) => {
     return res.status(401).send({
       error: "userNotExists"
     });
+
+  if (!req.header("auth-token")) {
+    return res.status(200).send({
+      name: user.name,
+      username: user.username,
+      date: user.date,
+      sameUser: false
+    });
+  }
   const decoded = jwt.decode(req.header("auth-token"), { complete: true });
   const usernameFromToken = decoded.payload.username;
   if (decoded.payload === null) {
