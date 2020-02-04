@@ -8,6 +8,9 @@ const bcrypt = require("bcryptjs");
 mongoose.set("useFindAndModify", false);
 
 route.get("/:username", async (req, res) => {
+  return res.status(200).send({
+    username: req.params.username
+  });
   const user = await User.findOne({
     username: req.params.username
   });
