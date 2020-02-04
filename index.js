@@ -13,7 +13,7 @@ app.use(ROUTES);
 
 app.use(function(req, res, next) {
   // Website you wish to allow to connect
-  res.header("Access-Control-Allow-Origin", "http://localhost:8888");
+  res.header("Access-Control-Allow-Origin", "*");
 
   // Request methods you wish to allow
   res.header(
