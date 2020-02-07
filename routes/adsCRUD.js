@@ -40,7 +40,6 @@ const upload = multer({
 router.post("/create", verify, upload.single("image"), async (req, res) => {
   const decoded = jwt.decode(req.header("auth-token"), { complete: true });
   const usernameFromToken = decoded.payload.username;
-  //console.log(req.body);
   const ads = new Advertisement({
     price: req.body.price,
     description: req.body.description,
@@ -50,15 +49,13 @@ router.post("/create", verify, upload.single("image"), async (req, res) => {
   ads
     .save()
     .then(result => {
-      //console.log(result);
       return res.status(200).send({
         message: "success"
       });
     })
     .catch(err => {
-      // console.log(err);
       return res.status(500).json({
-        error: err
+        error: "smthWentWrong"
       });
     });
 });
@@ -72,23 +69,17 @@ router.put("/update/:_id", verify, upload.single("image"), async (req, res) => {
   nextStep.then(async function(result) {
     if (result !== "next") return;
     const adsToUpdate = req.body;
-    console.log(req.body);
     if (req.file) {
       adsToUpdate.image = req.file.path;
     }
-    console.log(filter);
     try {
-      const resultingDoc = await Advertisement.findOneAndUpdate(
-        filter,
-        adsToUpdate,
-        { new: true }
-      );
+      await Advertisement.findOneAndUpdate(filter, adsToUpdate, { new: true });
       return res.status(200).send({
         message: "success"
       });
     } catch (err) {
       return res.status(500).send({
-        error: err
+        error: "smthWentWrong"
       });
     }
   });
@@ -101,14 +92,15 @@ router.delete("/delete/:_id", verify, async (req, res) => {
   const nextStep = checkUser(req.header("auth-token"), filter, res);
 
   nextStep.then(async function(result) {
+    if (result !== "next") return;
     try {
       await Advertisement.findOneAndDelete(filter);
       return res.status(200).send({
         message: "success"
       });
     } catch (err) {
-      return res.send(500).send({
-        error: err
+      return res.status(500).send({
+        error: "smthWentWrong"
       });
     }
   });
@@ -119,23 +111,16 @@ function checkUser(accessToken, filter, res) {
   const usernameFromToken = decoded.payload.username;
   return Advertisement.findOne(filter)
     .then(function(obj) {
-      if (!obj) {
-        return res.status(403).send({
-          error: "NoPage"
-        });
-      }
       if (usernameFromToken !== obj.adsOwner) {
-        // console.log(usernameFromToken);
-        // console.log(obj);
-        return res.status(401).send({
-          error: "AccessDenied"
+        return res.status(403).send({
+          error: "forbidden"
         });
       }
       return "next";
     })
     .catch(function(err) {
-      return res.status(500).send({
-        error: "smthWentWrong"
+      return res.status(404).send({
+        error: "notFound"
       });
     });
 }
