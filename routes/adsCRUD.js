@@ -44,6 +44,7 @@ router.post("/create", verify, upload.single("image"), async (req, res) => {
     price: req.body.price,
     description: req.body.description,
     adsOwner: usernameFromToken,
+    keyWords: req.body.keyWords,
     image: req.file.path
   });
   ads
@@ -72,6 +73,7 @@ router.put("/update/:_id", verify, upload.single("image"), async (req, res) => {
     if (req.file) {
       adsToUpdate.image = req.file.path;
     }
+    if (adsToUpdate.keyWords) delete adsToUpdate.keyWords;
     try {
       await Advertisement.findOneAndUpdate(filter, adsToUpdate, { new: true });
       return res.status(200).send({

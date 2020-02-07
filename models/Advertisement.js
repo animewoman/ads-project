@@ -16,6 +16,9 @@ const advertisementSchema = new mongoose.Schema({
   },
   adsOwner: {
     type: String
+  },
+  keyWords: {
+    type: String
   }
 });
 
