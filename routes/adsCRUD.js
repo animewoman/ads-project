@@ -8,10 +8,10 @@ const mongoose = require("mongoose");
 mongoose.set("useFindAndModify", false);
 
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, "./uploads/");
   },
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     cb(null, file.fieldname + "-" + Date.now() + file.originalname);
   }
 });
@@ -37,16 +37,19 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
-router.post("/create", verify, upload.single("image"), async (req, res) => {
+router.post("/create", verify, upload.array("image", 20), async (req, res) => {
   const decoded = jwt.decode(req.header("auth-token"), { complete: true });
   const usernameFromToken = decoded.payload.username;
   const ads = new Advertisement({
     price: req.body.price,
     description: req.body.description,
     adsOwner: usernameFromToken,
-    keyWords: req.body.keyWords,
-    image: req.file.path
+    keyWords: req.body.keyWords
   });
+  ads.image = [];
+  for (let i = 0; i < req.files.length; i++) {
+    ads.image.push(req.files[i].path);
+  }
   ads
     .save()
     .then(result => {
@@ -61,21 +64,26 @@ router.post("/create", verify, upload.single("image"), async (req, res) => {
     });
 });
 
-router.put("/update/:_id", verify, upload.single("image"), async (req, res) => {
+router.put("/update/:_id", verify, upload.array("image", 20), async (req, res) => {
   const filter = {
     _id: req.params._id
   };
   const nextStep = checkUser(req.header("auth-token"), filter, res);
 
-  nextStep.then(async function(result) {
+  nextStep.then(async function (result) {
     if (result !== "next") return;
     const adsToUpdate = req.body;
-    if (req.file) {
-      adsToUpdate.image = req.file.path;
+    adsToUpdate.image = [];
+    if (req.files) {
+      for (let i = 0; i < req.files.length; i++) {
+        adsToUpdate.image.push(req.files.path);
+      }
     }
     if (adsToUpdate.keyWords) delete adsToUpdate.keyWords;
     try {
-      await Advertisement.findOneAndUpdate(filter, adsToUpdate, { new: true });
+      await Advertisement.findOneAndUpdate(filter, adsToUpdate, {
+        new: true
+      });
       return res.status(200).send({
         message: "success"
       });
@@ -85,7 +93,8 @@ router.put("/update/:_id", verify, upload.single("image"), async (req, res) => {
       });
     }
   });
-});
+}
+);
 
 router.delete("/delete/:_id", verify, async (req, res) => {
   const filter = {
@@ -93,7 +102,7 @@ router.delete("/delete/:_id", verify, async (req, res) => {
   };
   const nextStep = checkUser(req.header("auth-token"), filter, res);
 
-  nextStep.then(async function(result) {
+  nextStep.then(async function (result) {
     if (result !== "next") return;
     try {
       await Advertisement.findOneAndDelete(filter);
@@ -112,7 +121,7 @@ function checkUser(accessToken, filter, res) {
   const decoded = jwt.decode(accessToken, { complete: true });
   const usernameFromToken = decoded.payload.username;
   return Advertisement.findOne(filter)
-    .then(function(obj) {
+    .then(function (obj) {
       if (usernameFromToken !== obj.adsOwner) {
         return res.status(403).send({
           error: "forbidden"
@@ -120,7 +129,7 @@ function checkUser(accessToken, filter, res) {
       }
       return "next";
     })
-    .catch(function(err) {
+    .catch(function (err) {
       return res.status(404).send({
         error: "notFound"
       });
